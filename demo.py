@@ -35,10 +35,10 @@ def process_image(image_path, opWrapper):
             right_leg_missing = is_limb_missing(person, right_leg_points)
 
             if left_arm_missing or right_arm_missing or left_leg_missing or right_leg_missing:
-                return True
-        return False
+                return True, datum.cvOutputData
+        return False, datum.cvOutputData
     else:
-        return None  # 没有检测到人物
+        return None, None  # 没有检测到人物
 
 def main():
     params = {
@@ -50,19 +50,25 @@ def main():
     opWrapper.start()
 
     input_folder = "./sample/"  # 确保这个文件夹存在且包含要处理的图像
+    output_folder = "./output/"
+    os.makedirs(output_folder, exist_ok=True)
     results = {}
 
     for filename in os.listdir(input_folder):
         if filename.endswith(".jpg") or filename.endswith(".png"):
             image_path = os.path.join(input_folder, filename)
 
-            result = process_image(image_path, opWrapper)
+            result, render_image = process_image(image_path, opWrapper)
             if result is None:
                 results[filename] = "未检测到人物"
             elif result:
                 results[filename] = "四肢残缺"
             else:
                 results[filename] = "四肢完好"
+
+            if render_image is not None:
+                save_render_image_file = output_folder + filename
+                cv2.imwrite(save_render_image_file, render_image)
 
     for image, result in results.items():
         print(f"{image}: {result}")
